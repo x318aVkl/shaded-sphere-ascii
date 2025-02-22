@@ -5,11 +5,21 @@
 #include <math.h>
 #include <stdlib.h>
 
+#if defined(WINDOWS)
+    #include <windows.h>
+#define sleep(t) Sleep((t)*100.0)
+    #elif defined(LINUX)
+#include <unistd.h>
+#else
+    #error "Neither WINDOWS or LINUX is defined"
+#endif
+
+
 char shade( int i, int j, float k ) {
     
 	// Camera parameters
 	float oc[3] = {-1.2, 0.5, 0.7};
-	oc[0] += sin(k/10);
+	oc[0] += sin(k/60);
 	float o[3] = {0, ((float)j)/39, 1-((float)i)/39}; 
 	float u[3] = {o[0]-oc[0], o[1]-oc[1], o[2]-oc[2]};
 	float un = 1/sqrt(u[0]*u[0] + u[1]*u[1] + u[2]*u[2]);
@@ -22,7 +32,7 @@ char shade( int i, int j, float k ) {
 	const float r = 0.6;
 	
 	// Light source inverse direction
-	float l[3] = {cos(k/10)*(float)sin(1.1), sin(k/10)*(float)sin(1.1), cos(1.1)};
+	float l[3] = {cos(k/40)*(float)sin(1.1), sin(k/40)*(float)sin(1.1), cos(1.1)};
     
 	// Sphere-ray interception
 	float A = u[0]*(o[0]-c[0]) + u[1]*(o[1]-c[1]) + u[2]*(o[2]-c[2]);
@@ -74,21 +84,25 @@ char shade( int i, int j, float k ) {
 	// Convert illumination value to ascii character
 	char S = asc[ (int)(I*asclen) ];
 	
-    	return S;
+    return S;
 }
 
 void render() {
-	char c[81];
-	c[80] = '\0';
+	char c[40*81 + 1];
+	c[40*81] = '\0';
+	// time loop
 	for (int k=0; k<100000; ++k) {
-		system("cls");
+		// render all characters
 		for (int i=0; i<40; ++i) {
 			for (int j=0; j<40; ++j) {
-				c[2*j] = shade(i,j,(float)k);
-				c[2*j+1] = c[2*j];
+				c[81*i+2*j] = shade(i,j,(float)k);
+				c[81*i+2*j+1] = c[81*i+2*j];
 			}
-			printf("%s\n",c);
+			c[81*i+80] = '\n';
 		}
+		printf("\033[2J\033[1;1H");
+		printf("%s\n",c);
+		sleep(0.005);
 	}
 }
 
